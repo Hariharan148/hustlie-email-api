@@ -3,6 +3,7 @@ package sendotp
 import (
 	"github.com/Hariharan148/hustlie-email-api/api/config/emailApi"
 	"github.com/Hariharan148/hustlie-email-api/api/config/db"
+	"github.com/Hariharan148/hustlie-email-api/api/config/helpers"
 	mailjet "github.com/mailjet/mailjet-apiv3-go"
 	"github.com/go-redis/redis/v8"
 	"crypto/rand"
@@ -10,53 +11,55 @@ import (
 	"log"
 	"net/http"
 	"net"
-	"strings"
+	// "strings"
 	"strconv"
 	"os"
 	"time"
 
 )
 
+var ips net.IP
 var ip string
 
 
-func getIP(r *http.Request) (string, error) {
 
-    //Get IP from the X-REAL-IP header
-	
-    ip = r.Header.Get("X-REAL-IP")
-	
-    netIP := net.ParseIP(ip)
-    if netIP != nil {
-		fmt.Println("1",ip)
-        return ip, nil
-    }
+// func getIP(r *http.Request) (string, error) {
 
-    //Get IP from X-FORWARDED-FOR header
-    ips := r.Header.Get("X-FORWARDED-FOR")
+//     //Get IP from the X-REAL-IP header
 	
-    splitIps := strings.Split(ips, ",")
-    for _, ip := range splitIps {
-        netIP := net.ParseIP(ip)
-        if netIP != nil {
-			fmt.Println("2",ips)
-            return ip, nil
-        }
-    }
+//     ip = r.Header.Get("X-REAL-IP")
+	
+//     netIP := net.ParseIP(ip)
+//     if netIP != nil {
+// 		fmt.Println("1",ip)
+//         return ip, nil
+//     }
 
-    //Get IP from RemoteAddr
+//     //Get IP from X-FORWARDED-FOR header
+//     ips := r.Header.Get("X-FORWARDED-FOR")
 	
-    ip, _, err := net.SplitHostPort(r.RemoteAddr)
-    if err != nil {
-        return "", err
-    }
-    netIP = net.ParseIP(ip)
-    if netIP != nil {
-		fmt.Println(r.RemoteAddr)
-        return ip, nil
-    }
-    return "", fmt.Errorf("No valid ip found")
-}
+//     splitIps := strings.Split(ips, ",")
+//     for _, ip := range splitIps {
+//         netIP := net.ParseIP(ip)
+//         if netIP != nil {
+// 			fmt.Println("2",ips)
+//             return ip, nil
+//         }
+//     }
+
+//     //Get IP from RemoteAddr
+	
+//     ip, _, err := net.SplitHostPort(r.RemoteAddr)
+//     if err != nil {
+//         return "", err
+//     }
+//     netIP = net.ParseIP(ip)
+//     if netIP != nil {
+// 		fmt.Println(r.RemoteAddr)
+//         return ip, nil
+//     }
+//     return "", fmt.Errorf("No valid ip found")
+// }
 
 var r1 = db.RedisClient(1)
 
@@ -66,12 +69,10 @@ func rateLimiter(r *http.Request)(string, error){
 
 	defer r1.Close() 
 
-	ip, err := getIP(r)
-	fmt.Println(ip)
-	if err != nil {
-		log.Printf("Error getting the IP addr: ", err)
-		return "", err
-	}
+
+	ips, _ = helpers.LocalIP()
+	fmt.Println(ips)
+
 
 	val, err := r1.Get(db.Ctx, ip).Result()
 	if err != nil && err != redis.Nil{
