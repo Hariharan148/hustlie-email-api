@@ -1,4 +1,4 @@
-package config
+package emailApi
 
 import (
 	"os"
