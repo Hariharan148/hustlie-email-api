@@ -23,29 +23,36 @@ var ip string
 func getIP(r *http.Request) (string, error) {
 
     //Get IP from the X-REAL-IP header
+	
     ip = r.Header.Get("X-REAL-IP")
+	
     netIP := net.ParseIP(ip)
     if netIP != nil {
+		fmt.Println("1",ip)
         return ip, nil
     }
 
     //Get IP from X-FORWARDED-FOR header
     ips := r.Header.Get("X-FORWARDED-FOR")
+	
     splitIps := strings.Split(ips, ",")
     for _, ip := range splitIps {
         netIP := net.ParseIP(ip)
         if netIP != nil {
+			fmt.Println("2",ips)
             return ip, nil
         }
     }
 
     //Get IP from RemoteAddr
+	
     ip, _, err := net.SplitHostPort(r.RemoteAddr)
     if err != nil {
         return "", err
     }
     netIP = net.ParseIP(ip)
     if netIP != nil {
+		fmt.Println(r.RemoteAddr)
         return ip, nil
     }
     return "", fmt.Errorf("No valid ip found")
@@ -60,6 +67,7 @@ func rateLimiter(r *http.Request)(string, error){
 	defer r1.Close() 
 
 	ip, err := getIP(r)
+	fmt.Println(ip)
 	if err != nil {
 		log.Printf("Error getting the IP addr: ", err)
 		return "", err
@@ -77,6 +85,7 @@ func rateLimiter(r *http.Request)(string, error){
 			return "", err
 		}
 	} else {
+		val, err = r1.Get(db.Ctx, ip).Result()
 		valInt, err := strconv.Atoi(val)
 		if err != nil {
 			log.Printf("Error while converting to int: ", err)
@@ -85,6 +94,7 @@ func rateLimiter(r *http.Request)(string, error){
 		if valInt <= 0 {
 			return "true", nil
 		}
+		fmt.Println("lmit", valInt )
 	
 		
 	}
