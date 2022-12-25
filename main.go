@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Hariharan148/hustlie-email-api/api/handler/sendotp"
+	"github.com/Hariharan148/hustlie-email-api/api/handler/verifyotp"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
@@ -13,7 +14,7 @@ import (
 func setUpRoutes(app *fiber.App) {
 
 	app.Post("/sendotp", sendotp.SendEmail )
-	// app.Get("/verifyotp", verifyotp)
+	app.Post("/verify", verifyotp.VerifyOTP)
 }
 
 func main() {
