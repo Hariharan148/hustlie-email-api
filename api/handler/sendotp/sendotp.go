@@ -1,3 +1,4 @@
+
 package sendotp
 
 import (
@@ -57,16 +58,16 @@ func SendEmail(c *fiber.Ctx) (error) {
 	rd1 := db.RedisClient(1)
 	defer rd1.Close()
 
-	rd1.Incr(db.Ctx, c.IP())
+	// rd1.Incr(db.Ctx, c.IP())
 
 
-	fmt.Println("entered rl")
+	fmt.Println("entered r")
 	val, err := rd1.Get(db.Ctx, c.IP()).Result()
 
 	if err == redis.Nil {
-		_ = rd1.Set(db.Ctx, c.IP(), os.Getenv("API_LIMIT"), 24*3600*time.Second).Err()
+		_ = rd1.Set(db.Ctx, c.IP(), os.Getenv("API_LIMIT"), 10*time.Second).Err()
 
-	} else {
+	} else if err == nil{
 		val, _ = rd1.Get(db.Ctx, c.IP()).Result()
 		valInt, _ = strconv.Atoi(val)
 
@@ -75,11 +76,16 @@ func SendEmail(c *fiber.Ctx) (error) {
 		if valInt <= 0 {
 			limit, _ = rd1.TTL(db.Ctx, c.IP()).Result()
 
+			remTime := strconv.Itoa(int(limit/time.Minute/60))
+
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"error":              "Too many login attempts! You are restricted for next 24hrs",
-				"x_rate_limit_reset": limit / time.Minute / 60,
+				"error":              "Too many login attempts! You are restricted for next " + remTime +"hrs",
+				"x_rate_limit_reset": limit / time.Minute / 60  ,
 			})
 		}
+	} else {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":"Cannot connect to the database :(" ,	})
 	}
 	fmt.Println("rate limited")
 
@@ -123,12 +129,6 @@ func SendEmail(c *fiber.Ctx) (error) {
 		},
 	}
 
-	messages := mailjet.MessagesV31{Info: messagesInfo}
-	res, err := client.SendMailV31(&messages)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "cannot send the email"})
-	}
-
 
 	//DECREMENT THE LIMIT 
 	
@@ -140,20 +140,29 @@ func SendEmail(c *fiber.Ctx) (error) {
 	r := db.RedisClient(0)
 	defer r.Close()
 
-
 	value, err := r.Get(db.Ctx, body.Email).Result()
-	if err != nil {
+	fmt.Println(err)
+	if err != nil && err != redis.Nil{
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error":"cant connect to database"})
-	}
-
-	if value != ""{
+	} else {
 		value = "success"
 	}
+
 
 	err = r.Set(db.Ctx, body.Email, otp, 30*60*time.Second).Err()
 
 	if err != nil {
-		c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error":"cant connect to database"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error":"cant connect to database"})
+	} else {
+		value = "success"
+	}
+
+	
+
+	messages := mailjet.MessagesV31{Info: messagesInfo}
+	res, err := client.SendMailV31(&messages)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "cannot send the email"})
 	}
 
 

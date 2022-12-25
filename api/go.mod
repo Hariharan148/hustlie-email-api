@@ -1,14 +1,12 @@
-module github.com/Hariharan148/hustlie-email-api
+module github.com/Hariharan148/hustlie-email-api/api
 
 go 1.19
 
 require (
-	github.com/Hariharan148/Url-Shortener-Go-Redis/api v0.0.0-20221224174540-8f8e5531255f
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/joho/godotenv v1.4.0
 	github.com/mailjet/mailjet-apiv3-go v0.0.0-20201009050126-c24bc15a9394
-	github.com/tidwall/gjson v1.14.4
 )
 
 require (
@@ -20,8 +18,6 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.41.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
