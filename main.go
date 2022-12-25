@@ -12,7 +12,7 @@ import (
 
 func setUpRoutes(app *fiber.App) {
 
-	app.Post("/sendotp", sendotp.SendEmail)
+	app.Post("/sendotp", sendotp.SendEmail )
 	// app.Get("/verifyotp", verifyotp)
 }
 
