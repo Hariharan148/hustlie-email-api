@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-	"strconv"
+	// "os"
+	// "strconv"
 	"time"
-
-	"github.com/Hariharan148/Url-Shortener-Go-Redis/api/database"
-	"github.com/Hariharan148/hustlie-email-api/api/config/db"
+	// "github.com/Hariharan148/hustlie-email-api/api/config/db"
 	"github.com/Hariharan148/hustlie-email-api/api/config/emailApi"
-	"github.com/go-redis/redis/v8"
+	// "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	mailjet "github.com/mailjet/mailjet-apiv3-go"
 	"github.com/tidwall/gjson"
@@ -30,31 +28,32 @@ type Response struct {
 	XRateLimitReset time.Duration `json:"x_rate_limit_reset"`
 }
 
-func rateLimiter(c *fiber.Ctx) error {
-	rd1 := db.RedisClient(1)
-	defer rd1.Close()
+// func rateLimiter(c *fiber.Ctx) error {
+// 	rd1 := db.RedisClient(1)
+// 	defer rd1.Close()
+// 	fmt.Println("entered rl")
+// 	val, err := rd1.Get(db.Ctx, c.IP()).Result()
 
-	val, err := rd1.Get(db.Ctx, c.IP()).Result()
-
-	if err == redis.Nil {
-		_ = rd1.Set(db.Ctx, c.IP(), os.Getenv("API_LIMIT"), 24*3600*time.Second).Err()
-	} else {
-		// val, _ = rd1.Get(database.Ctx, c.IP()).Result()
-		valInt, _ := strconv.Atoi(val)
-		if valInt <= 0 {
-			limit, _ := rd1.TTL(database.Ctx, c.IP()).Result()
-			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-				"error":              "Too many login attempts! You are restricted for next 24hrs",
-				"x_rate_limit_reset": limit / time.Nanosecond / time.Minute,
-			})
-		}
-	}
-	return nil
-}
+// 	if err == redis.Nil {
+// 		_ = rd1.Set(db.Ctx, c.IP(), os.Getenv("API_LIMIT"), 24*3600*time.Second).Err()
+// 	} else {
+// 		val, _ = rd1.Get(database.Ctx, c.IP()).Result()
+// 		valInt, _ := strconv.Atoi(val)
+// 		if valInt <= 0 {
+// 			limit, _ := rd1.TTL(database.Ctx, c.IP()).Result()
+// 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+// 				"error":              "Too many login attempts! You are restricted for next 24hrs",
+// 				"x_rate_limit_reset": limit / time.Nanosecond / time.Minute,
+// 			})
+// 		}
+// 	}
+// 	fmt.Println("rate limited")
+// 	return nil
+// }
 
 func SendEmail(c *fiber.Ctx) error {
-	r1 := db.RedisClient(1)
-	defer r1.Close()
+	// r1 := db.RedisClient(1)
+	// defer r1.Close()
 
 	var body *Request
 
@@ -62,10 +61,11 @@ func SendEmail(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse the body"})
 	}
 
-	rateLimiter(c)
+	// rateLimiter(c)
+	fmt.Println("rate limited done")
 
 	client := emailApi.Client()
-
+	fmt.Println("sendmail")
 	otp := otpGenerator()
 
 	formatedMsg := fmt.Sprintf("<h3>Here is your OTP - " + otp + "</h3><br />Dear " + body.Name + ", Welcome to Huslie!")
@@ -105,20 +105,20 @@ func SendEmail(c *fiber.Ctx) error {
 
 	msgStatus := gjson.Get(strData, "Messages.0.Status")
 
-	resp := Response{
-		MailStatus:      msgStatus.String(),
-		DbStatus:        "",
-		XRateLimit:      2,
-		XRateLimitReset: 24,
-	}
+	// resp := Response{
+	// 	MailStatus:      msgStatus.String(),
+	// 	DbStatus:        "",
+	// 	XRateLimit:      2,
+	// 	XRateLimitReset: 24,
+	// }
 
-	r1.Decr(db.Ctx, c.IP())
+	// r1.Decr(db.Ctx, c.IP())
 
-	limit, _ := r1.Get(database.Ctx, c.IP()).Result()
-	resp.XRateLimit, _ = strconv.Atoi(limit)
+	// limit, _ := r1.Get(db.Ctx, c.IP()).Result()
+	// resp.XRateLimit, _ = strconv.Atoi(limit)
 
-	limitReset, _ := r1.TTL(database.Ctx, c.IP()).Result()
-	resp.XRateLimitReset = limitReset / time.Nanosecond / time.Minute
+	// limitReset, _ := r1.TTL(db.Ctx, c.IP()).Result()
+	// resp.XRateLimitReset = limitReset / time.Nanosecond / time.Minute
 
 	return c.Status(fiber.StatusOK).JSON(res)
 }
